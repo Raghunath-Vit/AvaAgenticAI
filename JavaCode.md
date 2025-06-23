@@ -1,87 +1,93 @@
 ```java
-// Java Spring Boot code generated based on the provided LLD
+// Java Spring Boot code generated based on LLD
 
-// Step 1: Define the main application class
-@SpringBootApplication
-public class Application {
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
-    }
-}
-
-// Step 2: Define the Controller class
+// Controller Class
 @RestController
-@RequestMapping("/api")
-public class ApiController {
+@RequestMapping("/api/v1")
+public class ExampleController {
 
     @Autowired
-    private ApiService apiService;
+    private ExampleService exampleService;
 
-    @GetMapping("/data")
-    public ResponseEntity<List<Data>> getData() {
-        List<Data> data = apiService.getData();
-        return new ResponseEntity<>(data, HttpStatus.OK);
+    @GetMapping("/example")
+    public ResponseEntity<ExampleResponse> getExample() {
+        ExampleResponse response = exampleService.getExample();
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/data")
-    public ResponseEntity<Data> createData(@RequestBody Data data) {
-        Data createdData = apiService.createData(data);
-        return new ResponseEntity<>(createdData, HttpStatus.CREATED);
+    @PostMapping("/example")
+    public ResponseEntity<ExampleResponse> createExample(@Valid @RequestBody ExampleRequest request) {
+        ExampleResponse response = exampleService.createExample(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
 
-// Step 3: Define the Service class
+// Service Class
 @Service
-public class ApiService {
+public class ExampleService {
 
-    @Autowired
-    private DataRepository dataRepository;
-
-    public List<Data> getData() {
-        return dataRepository.findAll();
+    public ExampleResponse getExample() {
+        // Business logic for getting example
+        return new ExampleResponse();
     }
 
-    public Data createData(Data data) {
-        return dataRepository.save(data);
+    public ExampleResponse createExample(ExampleRequest request) {
+        // Business logic for creating example
+        return new ExampleResponse();
     }
 }
 
-// Step 4: Define the Repository interface
-@Repository
-public interface DataRepository extends JpaRepository<Data, Long> {
+// Model Classes
+@Data
+public class ExampleRequest {
+    @NotNull
+    private String name;
 }
 
-// Step 5: Define the Data entity class
+@Data
+public class ExampleResponse {
+    private String id;
+    private String name;
+}
+
+// Entity Class
 @Entity
-public class Data {
-
+public class ExampleEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
-    @Size(min = 1, max = 100)
+    @Column(nullable = false)
     private String name;
-
-    // Getters and Setters
 }
 
-// Step 6: Define the Exception handling class
+// Repository Interface
+public interface ExampleRepository extends JpaRepository<ExampleEntity, Long> {
+}
+
+// Exception Handling
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Validation failed", ex.getBindingResult().toString());
+        return ResponseEntity.badRequest().body(errorResponse);
     }
 }
 
-// Step 7: Define the application properties
-# application.properties
-spring.datasource.url=jdbc:mysql://localhost:3306/mydb
-spring.datasource.username=root
-spring.datasource.password=root
-spring.jpa.hibernate.ddl-auto=update
+// Error Response Class
+@Data
+public class ErrorResponse {
+    private String message;
+    private String details;
+}
+
+// Application Properties
+@ConfigurationProperties(prefix = "example")
+public class ExampleProperties {
+    private String property;
+}
 
 // Code Creation Completed
 ```
