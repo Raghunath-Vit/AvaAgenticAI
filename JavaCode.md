@@ -1,100 +1,87 @@
-# Generated Java Springboot Code
 ```java
+// Java Spring Boot code generated based on the provided LLD
+
+// Step 1: Define the main application class
+@SpringBootApplication
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+
+// Step 2: Define the Controller class
 @RestController
 @RequestMapping("/api")
-public class SampleController {
+public class ApiController {
 
-    @GetMapping("/hello")
-    public ResponseEntity<String> sayHello() {
-        return ResponseEntity.ok("Hello, World!");
+    @Autowired
+    private ApiService apiService;
+
+    @GetMapping("/data")
+    public ResponseEntity<List<Data>> getData() {
+        List<Data> data = apiService.getData();
+        return new ResponseEntity<>(data, HttpStatus.OK);
+    }
+
+    @PostMapping("/data")
+    public ResponseEntity<Data> createData(@RequestBody Data data) {
+        Data createdData = apiService.createData(data);
+        return new ResponseEntity<>(createdData, HttpStatus.CREATED);
     }
 }
 
+// Step 3: Define the Service class
 @Service
-public class SampleService {
+public class ApiService {
 
-    public String getGreeting() {
-        return "Hello, World!";
+    @Autowired
+    private DataRepository dataRepository;
+
+    public List<Data> getData() {
+        return dataRepository.findAll();
+    }
+
+    public Data createData(Data data) {
+        return dataRepository.save(data);
     }
 }
 
+// Step 4: Define the Repository interface
+@Repository
+public interface DataRepository extends JpaRepository<Data, Long> {
+}
+
+// Step 5: Define the Data entity class
 @Entity
-public class SampleEntity {
+public class Data {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @NotNull
+    @Size(min = 1, max = 100)
     private String name;
 
     // Getters and Setters
 }
 
-@Repository
-public interface SampleRepository extends JpaRepository<SampleEntity, Long> {
-}
-
+// Step 6: Define the Exception handling class
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+    public ResponseEntity<String> handleException(Exception ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
 
-@Configuration
-public class AppConfig {
-
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
-}
-
-@Slf4j
-@Component
-public class LoggingComponent {
-
-    public void logInfo(String message) {
-        log.info(message);
-    }
-}
-
-@ConfigurationProperties(prefix = "sample")
-public class SampleProperties {
-
-    private String property;
-
-    // Getters and Setters
-}
-
-@EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests().anyRequest().authenticated().and().httpBasic();
-    }
-}
-
-@RestController
-@RequestMapping("/api/integration")
-public class IntegrationController {
-
-    private final RestTemplate restTemplate;
-
-    public IntegrationController(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
-
-    @GetMapping("/external")
-    public ResponseEntity<String> callExternalService() {
-        String response = restTemplate.getForObject("https://external-service/api", String.class);
-        return ResponseEntity.ok(response);
-    }
-}
+// Step 7: Define the application properties
+# application.properties
+spring.datasource.url=jdbc:mysql://localhost:3306/mydb
+spring.datasource.username=root
+spring.datasource.password=root
+spring.jpa.hibernate.ddl-auto=update
 
 // Code Creation Completed
 ```
