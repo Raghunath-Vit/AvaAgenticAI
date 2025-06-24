@@ -1,19 +1,16 @@
 package com.example.project.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "customer")
@@ -22,18 +19,19 @@ public class Customer {
     @Id
     private String id;
 
-    @NotBlank(message = "Name is required")
+    @NotBlank(message = "Name must not be blank")
     private String name;
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email must not be blank")
+    @Email(message = "Email should be valid")
     @Indexed(unique = true)
     private String email;
 
-    @NotBlank(message = "Phone is required")
+    @NotBlank(message = "Phone number must not be blank")
     @Pattern(
         regexp = "^\\+?[1-9]\\d{1,14}$",
-        message = "Phone number must be in E.164 format"
+        message = "Phone number must be in valid E.164 format"
     )
     private String phone;
+
 }
