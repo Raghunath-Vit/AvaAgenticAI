@@ -1,91 +1,107 @@
-# JUnit Test Cases
-
-## ApiControllerTest
-
+### ExampleControllerTest.java
 ```java
-@RunWith(SpringRunner.class)
-@WebMvcTest(ApiController.class)
-public class ApiControllerTest {
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.when;
+
+@WebMvcTest(ExampleController.class)
+public class ExampleControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private ApiService apiService;
+    private ExampleService exampleService;
 
     @Test
-    public void testGetData() throws Exception {
-        List<Data> dataList = Arrays.asList(new Data(1L, "Test Data"));
-        Mockito.when(apiService.getData()).thenReturn(dataList);
+    public void testGetExample() throws Exception {
+        ExampleResponse exampleResponse = new ExampleResponse();
+        exampleResponse.setId("1");
+        exampleResponse.setName("Example");
 
-        mockMvc.perform(get("/api/data"))
+        when(exampleService.getExample()).thenReturn(exampleResponse);
+
+        mockMvc.perform(get("/api/v1/example"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Test Data"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("Example"));
     }
 
     @Test
-    public void testCreateData() throws Exception {
-        Data data = new Data(1L, "Test Data");
-        Mockito.when(apiService.createData(Mockito.any(Data.class))).thenReturn(data);
+    public void testCreateExample() throws Exception {
+        ExampleRequest exampleRequest = new ExampleRequest();
+        exampleRequest.setName("Example");
 
-        mockMvc.perform(post("/api/data")
+        ExampleResponse exampleResponse = new ExampleResponse();
+        exampleResponse.setId("1");
+        exampleResponse.setName("Example");
+
+        when(exampleService.createExample(exampleRequest)).thenReturn(exampleResponse);
+
+        mockMvc.perform(post("/api/v1/example")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"Test Data\"}"))
+                .content("{"name":"Example"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("Test Data"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("Example"));
     }
 }
 ```
 
-## ApiServiceTest
-
+### ExampleServiceTest.java
 ```java
-@RunWith(SpringRunner.class)
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
 @SpringBootTest
-public class ApiServiceTest {
+public class ExampleServiceTest {
 
-    @Autowired
-    private ApiService apiService;
+    @InjectMocks
+    private ExampleService exampleService;
 
-    @MockBean
-    private DataRepository dataRepository;
+    @Mock
+    private ExampleRepository exampleRepository;
 
     @Test
-    public void testGetData() {
-        List<Data> dataList = Arrays.asList(new Data(1L, "Test Data"));
-        Mockito.when(dataRepository.findAll()).thenReturn(dataList);
+    public void testGetExample() {
+        ExampleEntity exampleEntity = new ExampleEntity();
+        exampleEntity.setId(1L);
+        exampleEntity.setName("Example");
 
-        List<Data> result = apiService.getData();
-        assertEquals(1, result.size());
-        assertEquals("Test Data", result.get(0).getName());
+        when(exampleRepository.findById(1L)).thenReturn(Optional.of(exampleEntity));
+
+        ExampleResponse response = exampleService.getExample();
+
+        assertEquals("1", response.getId());
+        assertEquals("Example", response.getName());
     }
 
     @Test
-    public void testCreateData() {
-        Data data = new Data(1L, "Test Data");
-        Mockito.when(dataRepository.save(Mockito.any(Data.class))).thenReturn(data);
+    public void testCreateExample() {
+        ExampleRequest request = new ExampleRequest();
+        request.setName("Example");
 
-        Data result = apiService.createData(data);
-        assertEquals("Test Data", result.getName());
-    }
-}
-```
+        ExampleEntity exampleEntity = new ExampleEntity();
+        exampleEntity.setName("Example");
 
-## GlobalExceptionHandlerTest
+        when(exampleRepository.save(exampleEntity)).thenReturn(exampleEntity);
 
-```java
-@RunWith(SpringRunner.class)
-@WebMvcTest
-public class GlobalExceptionHandlerTest {
+        ExampleResponse response = exampleService.createExample(request);
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Test
-    public void testHandleException() throws Exception {
-        mockMvc.perform(get("/api/invalid"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().string(containsString("Internal Server Error")));
+        assertEquals("Example", response.getName());
     }
 }
 ```
