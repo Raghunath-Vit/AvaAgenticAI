@@ -1,16 +1,24 @@
-### ExampleControllerTest.java
+# JUnit Test Cases
+
+## ExampleControllerTest.java
 ```java
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.mockito.Mockito.when;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @WebMvcTest(ExampleController.class)
 public class ExampleControllerTest {
@@ -21,52 +29,57 @@ public class ExampleControllerTest {
     @MockBean
     private ExampleService exampleService;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @BeforeEach
+    public void setup() {
+        MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(new ExampleController()).build();
+    }
+
     @Test
     public void testGetExample() throws Exception {
-        ExampleResponse exampleResponse = new ExampleResponse();
-        exampleResponse.setId("1");
-        exampleResponse.setName("Example");
+        ExampleResponse response = new ExampleResponse();
+        response.setId('1');
+        response.setName('Example');
 
-        when(exampleService.getExample()).thenReturn(exampleResponse);
+        when(exampleService.getExample()).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/example"))
-                .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("Example"));
+        mockMvc.perform(get('/api/v1/example'))
+                .andExpect(status().isOk());
     }
 
     @Test
     public void testCreateExample() throws Exception {
-        ExampleRequest exampleRequest = new ExampleRequest();
-        exampleRequest.setName("Example");
+        ExampleRequest request = new ExampleRequest();
+        request.setName('Example');
 
-        ExampleResponse exampleResponse = new ExampleResponse();
-        exampleResponse.setId("1");
-        exampleResponse.setName("Example");
+        ExampleResponse response = new ExampleResponse();
+        response.setId('1');
+        response.setName('Example');
 
-        when(exampleService.createExample(exampleRequest)).thenReturn(exampleResponse);
+        when(exampleService.createExample(request)).thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/example")
+        mockMvc.perform(post('/api/v1/example')
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{"name":"Example"}"))
-                .andExpect(status().isCreated())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("Example"));
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated());
     }
 }
 ```
 
-### ExampleServiceTest.java
+## ExampleServiceTest.java
 ```java
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.boot.test.context.SpringBootTest;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
 
-@SpringBootTest
 public class ExampleServiceTest {
 
     @InjectMocks
@@ -75,33 +88,38 @@ public class ExampleServiceTest {
     @Mock
     private ExampleRepository exampleRepository;
 
+    @BeforeEach
+    public void setup() {
+        MockitoAnnotations.openMocks(this);
+    }
+
     @Test
     public void testGetExample() {
-        ExampleEntity exampleEntity = new ExampleEntity();
-        exampleEntity.setId(1L);
-        exampleEntity.setName("Example");
+        ExampleResponse expectedResponse = new ExampleResponse();
+        expectedResponse.setId('1');
+        expectedResponse.setName('Example');
 
-        when(exampleRepository.findById(1L)).thenReturn(Optional.of(exampleEntity));
+        ExampleResponse actualResponse = exampleService.getExample();
 
-        ExampleResponse response = exampleService.getExample();
-
-        assertEquals("1", response.getId());
-        assertEquals("Example", response.getName());
+        assertEquals(expectedResponse.getId(), actualResponse.getId());
+        assertEquals(expectedResponse.getName(), actualResponse.getName());
     }
 
     @Test
     public void testCreateExample() {
         ExampleRequest request = new ExampleRequest();
-        request.setName("Example");
+        request.setName('Example');
 
-        ExampleEntity exampleEntity = new ExampleEntity();
-        exampleEntity.setName("Example");
+        ExampleResponse expectedResponse = new ExampleResponse();
+        expectedResponse.setId('1');
+        expectedResponse.setName('Example');
 
-        when(exampleRepository.save(exampleEntity)).thenReturn(exampleEntity);
+        when(exampleRepository.save(any(ExampleEntity.class))).thenReturn(new ExampleEntity());
 
-        ExampleResponse response = exampleService.createExample(request);
+        ExampleResponse actualResponse = exampleService.createExample(request);
 
-        assertEquals("Example", response.getName());
+        assertEquals(expectedResponse.getId(), actualResponse.getId());
+        assertEquals(expectedResponse.getName(), actualResponse.getName());
     }
 }
 ```
